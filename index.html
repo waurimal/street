@@ -86,7 +86,6 @@
             gap: 5px;
         }
 
-        /* PC 환경에서는 조작 화살표 숨기기 */
         @media (min-width: 801px) {
             #d-pad { display: none; }
         }
@@ -116,39 +115,60 @@
 <body>
 
 <div id="game-container">
-    <!-- Start Screen -->
     <div id="start-screen" class="overlay">
-        <div class="bg-white p-6 rounded-3xl text-center text-gray-800 w-full max-w-sm border-4 border-green-400 relative">
-            <button id="open-admin-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl">⚙️</button>
-            <h1 class="text-4xl text-green-600 mb-2">🐥 단어 깡총!</h1>
-            <p class="text-gray-500 mb-6 text-sm">자동차를 피해서 정답 단어로 점프하세요!</p>
+        <div class="bg-white p-6 rounded-3xl text-center text-gray-800 w-full max-w-sm border-4 border-green-400 relative flex flex-col max-h-[90vh]">
+            <button id="open-admin-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-xl z-10">⚙️</button>
+            <h1 class="text-4xl text-green-600 mb-2 mt-2">🐥 단어 깡총!</h1>
+            <p class="text-gray-500 mb-4 text-sm">자동차를 피해서 정답 단어로 점프!</p>
             
             <div class="flex gap-2 mb-2">
-                <select id="grade-input" class="w-1/4 p-3 border-2 border-gray-300 rounded-xl font-bold text-center outline-none focus:border-green-400 bg-white">
+                <select id="grade-input" class="w-1/4 p-2 border-2 border-gray-300 rounded-xl font-bold text-center outline-none focus:border-green-400 bg-white">
                     <option value="" disabled selected>학년</option>
                     <option value="1">1</option><option value="2">2</option><option value="3">3</option>
                     <option value="4">4</option><option value="5">5</option><option value="6">6</option>
                 </select>
-                <select id="class-input" class="w-1/4 p-3 border-2 border-gray-300 rounded-xl font-bold text-center outline-none focus:border-green-400 bg-white">
+                <select id="class-input" class="w-1/4 p-2 border-2 border-gray-300 rounded-xl font-bold text-center outline-none focus:border-green-400 bg-white">
                     <option value="" disabled selected>반</option>
                     <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
                     <option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option>
                 </select>
-                <input type="number" id="number-input" placeholder="번호" class="w-1/4 p-3 border-2 border-gray-300 rounded-xl font-bold text-center outline-none focus:border-green-400" min="1">
-                <input type="text" id="name-input" placeholder="이름" class="w-1/4 p-3 border-2 border-gray-300 rounded-xl font-bold text-center outline-none focus:border-green-400" maxlength="5">
+                <input type="number" id="number-input" placeholder="번호" class="w-1/4 p-2 border-2 border-gray-300 rounded-xl font-bold text-center outline-none focus:border-green-400" min="1">
+                <input type="text" id="name-input" placeholder="이름" class="w-1/4 p-2 border-2 border-gray-300 rounded-xl font-bold text-center outline-none focus:border-green-400" maxlength="5">
             </div>
             
             <select id="unit-select" class="w-full p-3 border-2 border-gray-300 rounded-xl mb-4 font-bold text-center outline-none focus:border-green-400 bg-white">
                 <option value="all">전체 단원 학습하기</option>
             </select>
             
-            <div id="loading-status" class="text-sm text-blue-500 mb-4">단어 데이터 불러오는 중...</div>
-            <button id="start-btn" class="btn w-full text-xl py-3 hidden">게임 시작</button>
+            <div id="loading-status" class="text-sm text-blue-500 mb-2">단어 데이터 불러오는 중...</div>
+            <button id="start-btn" class="btn w-full text-xl py-3 hidden mb-4">게임 시작</button>
+
+            <!-- 시작 화면 명예의 전당 -->
+            <div class="bg-gray-100 rounded-xl p-3 text-left flex flex-col flex-grow overflow-hidden min-h-[120px]">
+                <h3 class="text-center text-sm mb-2 text-gray-600 font-bold">🏆 랭킹 보드</h3>
+                <select id="start-record-unit" class="w-full p-1 mb-2 border-2 border-gray-300 rounded font-bold text-center outline-none bg-white text-xs">
+                    <option value="all">전체 단원 랭킹</option>
+                </select>
+                <div id="start-leaderboard-list" class="text-xs overflow-y-auto flex-grow no-scrollbar space-y-1">
+                    <p class="text-center text-gray-400">데이터 불러오는 중...</p>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- Admin Screen -->
-    <div id="admin-screen" class="overlay hidden">
+    <div id="password-modal" class="overlay hidden z-50">
+        <div class="bg-white p-6 rounded-3xl text-center text-gray-800 w-11/12 max-w-xs border-4 border-purple-400 shadow-2xl">
+            <h2 class="text-2xl font-bold mb-4 text-purple-600">🔒 관리자 인증</h2>
+            <p class="text-sm text-gray-500 mb-4">비밀번호를 입력해주세요.</p>
+            <input type="password" id="admin-password" placeholder="비밀번호" class="w-full p-3 border-2 border-gray-300 rounded-xl mb-4 text-center font-bold outline-none focus:border-purple-400">
+            <div class="flex gap-2">
+                <button id="pwd-cancel-btn" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded-xl font-bold hover:bg-gray-300">취소</button>
+                <button id="pwd-confirm-btn" class="flex-1 bg-purple-500 text-white py-2 rounded-xl font-bold shadow-[0_4px_0_#9333ea] active:shadow-none active:translate-y-1">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="admin-screen" class="overlay hidden z-40">
         <div class="bg-white p-6 rounded-3xl text-gray-800 w-full max-w-md border-4 border-purple-400 flex flex-col h-5/6">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-2xl text-purple-600 font-bold">🛠️ 관리자 모드</h2>
@@ -189,18 +209,17 @@
         </div>
     </div>
 
-    <!-- Game Over Screen -->
     <div id="game-over-screen" class="overlay hidden">
-        <div class="bg-white p-8 rounded-3xl text-center text-gray-800 w-11/12 max-w-sm border-4 border-red-400">
+        <div class="bg-white p-8 rounded-3xl text-center text-gray-800 w-11/12 max-w-sm border-4 border-red-400 flex flex-col max-h-[90vh]">
             <h1 class="text-4xl text-red-500 mb-2">앗, 게임 오버! 💦</h1>
             <p class="text-2xl mb-4 text-gray-700">내 점수: <span id="final-score" class="text-blue-500 font-bold">0</span>점</p>
             
-            <div class="bg-gray-100 rounded-xl p-4 mb-6 text-left max-h-56 flex flex-col no-scrollbar">
-                <h3 class="text-center text-lg mb-2 text-gray-600">🏆 명예의 전당</h3>
+            <div class="bg-gray-100 rounded-xl p-4 mb-6 text-left flex flex-col flex-grow overflow-hidden min-h-[150px]">
+                <h3 class="text-center text-lg mb-2 text-gray-600 font-bold">🏆 명예의 전당</h3>
                 <select id="gameover-record-unit" class="w-full p-2 mb-2 border-2 border-gray-300 rounded font-bold text-center outline-none bg-white text-sm">
                     <option value="all">전체 단원 랭킹</option>
                 </select>
-                <div id="leaderboard-list" class="text-sm overflow-y-auto flex-grow no-scrollbar">
+                <div id="leaderboard-list" class="text-sm overflow-y-auto flex-grow no-scrollbar space-y-1">
                     <p class="text-center text-gray-400">데이터 불러오는 중...</p>
                 </div>
             </div>
@@ -209,18 +228,14 @@
         </div>
     </div>
 
-    <!-- Message Toast -->
     <div id="toast-message" class="absolute top-1/4 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-yellow-900 px-6 py-2 rounded-full font-bold text-xl shadow-lg transition-opacity duration-300 opacity-0 pointer-events-none z-30 whitespace-nowrap">
         정답입니다! +10
     </div>
 
-    <!-- Exit Game Button -->
     <button id="exit-game-btn" class="absolute top-4 right-4 bg-gray-800 bg-opacity-70 text-white px-4 py-2 rounded-full font-bold shadow-md z-30 hidden hover:bg-opacity-90 border-2 border-white transition-all">나가기 🚪</button>
 
-    <!-- Canvas for Game Rendering -->
     <canvas id="gameCanvas"></canvas>
 
-    <!-- D-Pad for Touch Devices -->
     <div id="d-pad">
         <div class="d-btn" id="btn-up">⬆️</div>
         <div class="d-btn" id="btn-left">⬅️</div>
@@ -266,10 +281,12 @@
     const screens = {
         start: document.getElementById('start-screen'),
         admin: document.getElementById('admin-screen'),
+        passwordModal: document.getElementById('password-modal'),
         gameOver: document.getElementById('game-over-screen'),
         toast: document.getElementById('toast-message'),
         finalScore: document.getElementById('final-score'),
         leaderboardList: document.getElementById('leaderboard-list'),
+        startLeaderboardList: document.getElementById('start-leaderboard-list'),
         gradeInput: document.getElementById('grade-input'),
         classInput: document.getElementById('class-input'),
         numberInput: document.getElementById('number-input'),
@@ -277,6 +294,7 @@
         unitSelect: document.getElementById('unit-select'),
         gameoverRecordUnit: document.getElementById('gameover-record-unit'),
         adminRecordUnit: document.getElementById('admin-record-unit'),
+        startRecordUnit: document.getElementById('start-record-unit'),
         startBtn: document.getElementById('start-btn'),
         loadingStatus: document.getElementById('loading-status'),
         adminWordSection: document.getElementById('admin-word-section'),
@@ -285,7 +303,10 @@
         adminRecordList: document.getElementById('admin-record-list'),
         tabWord: document.getElementById('tab-word'),
         tabRecord: document.getElementById('tab-record'),
-        exitGameBtn: document.getElementById('exit-game-btn')
+        exitGameBtn: document.getElementById('exit-game-btn'),
+        adminPassword: document.getElementById('admin-password'),
+        pwdCancelBtn: document.getElementById('pwd-cancel-btn'),
+        pwdConfirmBtn: document.getElementById('pwd-confirm-btn')
     };
 
     async function initFirebase() {
@@ -294,17 +315,16 @@
             auth = getAuth(app);
             db = getFirestore(app);
 
-            if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                await signInWithCustomToken(auth, __initial_auth_token);
-            } else {
-                await signInAnonymously(auth);
-            }
+            // 사용자의 개인 Firebase 프로젝트(eng-activity)를 사용하므로
+            // 환경에서 주입되는 토큰 대신 무조건 익명 로그인을 시도하도록 수정합니다.
+            await signInAnonymously(auth);
             
             onAuthStateChanged(auth, async (user) => {
                 if (user) {
                     currentUser = user;
                     isFirebaseReady = true;
                     await fetchWords();
+                    await renderStartLeaderboard(); // 시작화면 랭킹도 바로 불러오기
                 }
             });
         } catch (error) {
@@ -312,6 +332,7 @@
             wordList = [...defaultWords];
             updateUnitSelects();
             enableStartButton();
+            screens.startLeaderboardList.innerHTML = '<p class="text-center text-red-400">오프라인 모드입니다.</p>';
         }
     }
     
@@ -346,7 +367,7 @@
     function updateUnitSelects() {
         const units = [...new Set(wordList.map(w => parseInt(w.unit)))].sort((a, b) => a - b);
         
-        [screens.unitSelect, screens.gameoverRecordUnit, screens.adminRecordUnit].forEach(select => {
+        [screens.unitSelect, screens.gameoverRecordUnit, screens.adminRecordUnit, screens.startRecordUnit].forEach(select => {
             if(!select) return;
             while (select.options.length > 1) { select.remove(1); }
             units.forEach(unit => {
@@ -364,7 +385,7 @@
         
         if (filteredList.length < 5) {
             screens.loadingStatus.classList.remove('hidden');
-            screens.loadingStatus.textContent = "선택한 단원에 최소 5개의 단어가 필요합니다.";
+            screens.loadingStatus.textContent = "선택한 단원에 단어가 부족합니다. (최소 5개)";
             screens.loadingStatus.classList.replace('text-blue-500', 'text-red-500');
             screens.startBtn.classList.add('hidden');
         } else {
@@ -454,7 +475,6 @@
         }
     });
 
-    // Enter 키로 비밀번호 확인 가능
     screens.adminPassword.addEventListener('keyup', (e) => {
         if (e.key === 'Enter') screens.pwdConfirmBtn.click();
     });
@@ -516,7 +536,8 @@
                 delBtn.innerText = '삭제';
                 delBtn.onclick = async () => {
                     await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'leaderboard', record.id));
-                    fetchAdminRecords();
+                    fetchAdminRecords(); // Refresh admin list
+                    renderStartLeaderboard(); // Refresh start screen list
                 };
                 li.appendChild(delBtn);
                 screens.adminRecordList.appendChild(li);
@@ -526,6 +547,51 @@
         }
     }
     screens.adminRecordUnit.addEventListener('change', fetchAdminRecords);
+
+    // 공통 랭킹 렌더링 함수 (초기 화면 및 게임 오버 화면용)
+    async function fetchAndRenderLeaderboard(unitValue, listElement) {
+        if (!currentUser) {
+            listElement.innerHTML = '<p class="text-center text-red-400">오프라인 모드입니다.</p>';
+            return;
+        }
+        listElement.innerHTML = '<p class="text-center text-gray-400">기록 불러오는 중...</p>';
+        try {
+            const leaderboardRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
+            const snapshot = await getDocs(leaderboardRef);
+            let records = [];
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                if(unitValue === 'all' || parseInt(data.unit) === parseInt(unitValue)) {
+                    records.push(data);
+                }
+            });
+
+            records.sort((a, b) => b.score - a.score);
+            const top5 = records.slice(0, 5);
+
+            listElement.innerHTML = '';
+            if (top5.length === 0) {
+                listElement.innerHTML = '<p class="text-center text-gray-400">아직 랭킹이 없어요.</p>';
+            } else {
+                top5.forEach((entry, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'flex justify-between items-center py-1 border-b border-gray-200 last:border-0';
+                    let medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `<span class="px-1 text-gray-500">${index+1}.</span>`;
+                    div.innerHTML = `<span class="font-bold text-gray-700">${medal} [${entry.unit === 'all' ? '전체' : entry.unit + '단원'}] ${entry.maskedName}</span><span class="text-blue-500 font-bold">${entry.score}점</span>`;
+                    listElement.appendChild(div);
+                });
+            }
+        } catch(e) {
+            listElement.innerHTML = '<p class="text-center text-red-400">기록을 불러오지 못했습니다.</p>';
+        }
+    }
+
+    async function renderStartLeaderboard() {
+        await fetchAndRenderLeaderboard(screens.startRecordUnit.value, screens.startLeaderboardList);
+    }
+    screens.startRecordUnit.addEventListener('change', renderStartLeaderboard);
+    screens.gameoverRecordUnit.addEventListener('change', () => fetchAndRenderLeaderboard(screens.gameoverRecordUnit.value, screens.leaderboardList));
+
 
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
@@ -537,7 +603,7 @@
     let currentWord = null;
     let targetZones = [];
     let cars = [];
-    let playerInfo = { classNum: "", studentNum: "", name: "", maskedName: "", unit: "all" };
+    let playerInfo = { gradeNum: "", classNum: "", studentNum: "", name: "", maskedName: "", unit: "all" };
     let gameWordList = [];
     let keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
 
@@ -547,25 +613,22 @@
         x: 0, y: 0, size: 30, speed: 5, emoji: "🐥",
         reset: function() {
             this.x = canvas.width / 2;
-            this.y = layout.roadBottom + 10; // 길 아래에 안전하게 위치
+            this.y = layout.roadBottom + 10;
         }
     };
 
     function recalculateLayout() {
         const isMobile = window.innerWidth <= 800;
-        // 모바일일 경우 하단 D-Pad 공간 확보(약 220px), PC면 여백 50px만
         const bottomSafeSpace = isMobile ? 220 : 50; 
         const availableHeight = canvas.height - bottomSafeSpace;
 
-        layout.laneHeight = availableHeight / 7; // 도로 차선 1개의 높이
+        layout.laneHeight = availableHeight / 7; 
         layout.roadBottom = availableHeight;
-        layout.roadTop = layout.roadBottom - (layout.laneHeight * 5); // 5차선
+        layout.roadTop = layout.roadBottom - (layout.laneHeight * 5); 
         
-        // 정답 박스 (길 바로 위로 붙임)
         layout.zoneHeight = Math.min(60, canvas.height * 0.08);
         layout.zoneY = layout.roadTop - layout.zoneHeight - 5; 
 
-        // Update target zones spacing if they exist
         if (targetZones.length > 0) {
             const zoneWidth = (canvas.width - 20) / 5 - 4; 
             targetZones.forEach((zone, index) => {
@@ -673,7 +736,6 @@
         ctx.fillStyle = '#a8e6cf';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-        // Draw Roads
         ctx.fillStyle = '#666';
         ctx.fillRect(0, layout.roadTop, canvas.width, layout.roadBottom - layout.roadTop);
         
@@ -691,18 +753,15 @@
 
         if (state !== 'PLAYING') return;
 
-        // Draw UI Top (Hearts and Score on LEFT, Target on CENTER)
         ctx.fillStyle = 'rgba(255,255,255,0.8)';
         ctx.fillRect(0, 0, canvas.width, 70);
         
-        // 목표 단어 (중앙)
         ctx.fillStyle = '#333';
         ctx.font = 'bold 24px Jua';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(`목표: ${currentWord.kr}`, canvas.width / 2, 35);
 
-        // 점수와 생명 (좌측)
         ctx.font = 'bold 18px Jua';
         ctx.textAlign = 'left';
         ctx.fillStyle = '#1e3a8a';
@@ -710,7 +769,6 @@
         ctx.fillStyle = '#ef4444';
         ctx.fillText("❤️".repeat(lives), 15, 50);
 
-        // Draw Target Zones
         targetZones.forEach(zone => {
             ctx.fillStyle = 'white';
             ctx.beginPath();
@@ -729,13 +787,11 @@
             ctx.fillText(zone.word.en, zone.x + zone.width/2, zone.y + zone.height/2);
         });
 
-        // Draw Cars
         ctx.font = '35px Arial';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
         cars.forEach(car => ctx.fillText(car.emoji, car.x, car.y - 5));
 
-        // Draw Player
         ctx.font = '30px Arial';
         ctx.fillText(player.emoji, player.x, player.y);
     }
@@ -817,17 +873,11 @@
         screens.finalScore.textContent = score;
         screens.gameOver.classList.remove('hidden');
         
-        // 방금 플레이한 단원으로 드롭다운 자동 설정
         screens.gameoverRecordUnit.value = playerInfo.unit; 
         
-        if (!currentUser) {
-            screens.leaderboardList.innerHTML = '<p class="text-center text-red-400">오프라인 모드입니다.</p>';
-            return;
-        }
-
-        try {
-            const leaderboardRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
-            if (score > 0) {
+        if (currentUser && score > 0) {
+            try {
+                const leaderboardRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
                 await addDoc(leaderboardRef, { 
                     gradeNum: playerInfo.gradeNum,
                     classNum: playerInfo.classNum,
@@ -838,48 +888,14 @@
                     score: score, 
                     timestamp: serverTimestamp() 
                 });
+            } catch (error) {
+                console.error("Failed to save score:", error);
             }
-            await renderGameOverLeaderboard();
-        } catch (error) {
-            screens.leaderboardList.innerHTML = '<p class="text-center text-red-400">기록을 저장하거나 불러오지 못했습니다.</p>';
         }
+        await fetchAndRenderLeaderboard(screens.gameoverRecordUnit.value, screens.leaderboardList);
     }
 
-    async function renderGameOverLeaderboard() {
-        const unit = screens.gameoverRecordUnit.value;
-        screens.leaderboardList.innerHTML = '<p class="text-center text-gray-400">점수 기록 중...</p>';
-        try {
-            const leaderboardRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
-            const snapshot = await getDocs(leaderboardRef);
-            let records = [];
-            snapshot.forEach(doc => {
-                const data = doc.data();
-                if(unit === 'all' || parseInt(data.unit) === parseInt(unit)) {
-                    records.push(data);
-                }
-            });
-
-            records.sort((a, b) => b.score - a.score);
-            const top5 = records.slice(0, 5);
-
-            screens.leaderboardList.innerHTML = '';
-            if (top5.length === 0) {
-                screens.leaderboardList.innerHTML = '<p class="text-center text-gray-400">아직 랭킹이 없어요.</p>';
-            } else {
-                top5.forEach((entry, index) => {
-                    const div = document.createElement('div');
-                    div.className = 'flex justify-between items-center py-1 border-b border-gray-200 last:border-0';
-                    let medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index+1}.`;
-                    div.innerHTML = `<span class="font-bold text-gray-700">${medal} [${entry.unit === 'all' ? '전체' : entry.unit + '단원'}] ${entry.maskedName}</span><span class="text-blue-500 font-bold">${entry.score}점</span>`;
-                    screens.leaderboardList.appendChild(div);
-                });
-            }
-        } catch(e) {
-            screens.leaderboardList.innerHTML = '<p class="text-center text-red-400">기록을 불러오지 못했습니다.</p>';
-        }
-    }
-    screens.gameoverRecordUnit.addEventListener('change', renderGameOverLeaderboard);
-
+    // Controls
     window.addEventListener('keydown', e => { if(keys.hasOwnProperty(e.code)) keys[e.code] = true; });
     window.addEventListener('keyup', e => { if(keys.hasOwnProperty(e.code)) keys[e.code] = false; });
 
@@ -901,12 +917,12 @@
     document.getElementById('restart-btn').addEventListener('click', startGame);
     
     // 게임 중 초기화면으로 나가기 버튼
-    screens.exitGameBtn.addEventListener('click', () => {
+    screens.exitGameBtn.addEventListener('click', async () => {
         state = 'START';
         screens.start.classList.remove('hidden');
         screens.gameOver.classList.add('hidden');
         screens.exitGameBtn.classList.add('hidden');
-        renderStartLeaderboard(); // 초기화면으로 나갈 때 랭킹 갱신
+        await renderStartLeaderboard(); // 초기화면으로 나갈 때 랭킹 새로고침
     });
 
     window.onload = () => {
