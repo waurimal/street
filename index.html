@@ -120,9 +120,30 @@
             <p class="text-gray-500 mb-6 text-sm">자동차를 피해서 정답 단어로 점프하세요!</p>
             
             <div class="flex gap-2 mb-2">
-                <input type="number" id="class-input" placeholder="반" class="w-1/4 p-3 border-2 border-gray-300 rounded-xl font-bold text-center outline-none focus:border-green-400" min="1">
+                <select id="grade-input" class="w-1/4 p-3 border-2 border-gray-300 rounded-xl font-bold text-center outline-none focus:border-green-400 bg-white">
+                    <option value="" disabled selected>학년</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                </select>
+                <select id="class-input" class="w-1/4 p-3 border-2 border-gray-300 rounded-xl font-bold text-center outline-none focus:border-green-400 bg-white">
+                    <option value="" disabled selected>반</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="6">6</option>
+                    <option value="7">7</option>
+                    <option value="8">8</option>
+                    <option value="9">9</option>
+                    <option value="10">10</option>
+                </select>
                 <input type="number" id="number-input" placeholder="번호" class="w-1/4 p-3 border-2 border-gray-300 rounded-xl font-bold text-center outline-none focus:border-green-400" min="1">
-                <input type="text" id="name-input" placeholder="이름" class="w-2/4 p-3 border-2 border-gray-300 rounded-xl font-bold text-center outline-none focus:border-green-400" maxlength="5">
+                <input type="text" id="name-input" placeholder="이름" class="w-1/4 p-3 border-2 border-gray-300 rounded-xl font-bold text-center outline-none focus:border-green-400" maxlength="5">
             </div>
             
             <select id="unit-select" class="w-full p-3 border-2 border-gray-300 rounded-xl mb-4 font-bold text-center outline-none focus:border-green-400 bg-white">
@@ -149,11 +170,13 @@
 
             <!-- 단어 관리 섹션 -->
             <div id="admin-word-section" class="flex flex-col flex-grow overflow-hidden">
-                <div class="flex gap-2 mb-4">
-                    <input type="number" id="new-unit" placeholder="단원" class="w-1/4 p-2 border-2 rounded text-center outline-none focus:border-purple-400" min="1">
-                    <input type="text" id="new-kr" placeholder="한글(사과)" class="w-2/4 p-2 border-2 rounded text-center outline-none focus:border-purple-400">
-                    <input type="text" id="new-en" placeholder="영어(Apple)" class="w-2/4 p-2 border-2 rounded text-center outline-none focus:border-purple-400">
-                    <button id="add-word-btn" class="bg-purple-500 text-white px-4 rounded font-bold hover:bg-purple-600">+</button>
+                <div class="mb-4 bg-gray-50 p-3 rounded-xl border border-gray-200">
+                    <div class="flex gap-2 mb-2">
+                        <input type="number" id="new-unit" placeholder="단원 (예: 1)" class="w-1/3 p-2 border-2 rounded text-center outline-none focus:border-purple-400" min="1">
+                        <span class="text-xs text-gray-500 flex items-center">쉼표(,)나 탭(Tab)으로 구분해 입력하세요.</span>
+                    </div>
+                    <textarea id="new-words-bulk" rows="3" placeholder="한글, 영어&#13;&#10;사과, Apple&#13;&#10;학교, School" class="w-full p-2 border-2 rounded outline-none focus:border-purple-400 text-sm resize-none"></textarea>
+                    <button id="add-word-btn" class="w-full mt-2 bg-purple-500 text-white px-4 py-2 rounded font-bold hover:bg-purple-600 transition-colors">단어 일괄 추가</button>
                 </div>
                 <div class="bg-gray-100 flex-grow rounded-xl p-2 overflow-y-auto no-scrollbar">
                     <ul id="admin-word-list" class="space-y-2 text-sm"></ul>
@@ -192,6 +215,9 @@
     <div id="toast-message" class="absolute top-1/4 left-1/2 transform -translate-x-1/2 bg-yellow-400 text-yellow-900 px-6 py-2 rounded-full font-bold text-xl shadow-lg transition-opacity duration-300 opacity-0 pointer-events-none z-30 whitespace-nowrap">
         정답입니다! +10
     </div>
+
+    <!-- Exit Game Button -->
+    <button id="exit-game-btn" class="absolute top-4 right-4 bg-gray-800 bg-opacity-70 text-white px-4 py-2 rounded-full font-bold shadow-md z-30 hidden hover:bg-opacity-90 border-2 border-white transition-all">나가기 🚪</button>
 
     <!-- Canvas for Game Rendering -->
     <canvas id="gameCanvas"></canvas>
@@ -251,6 +277,7 @@
         toast: document.getElementById('toast-message'),
         finalScore: document.getElementById('final-score'),
         leaderboardList: document.getElementById('leaderboard-list'),
+        gradeInput: document.getElementById('grade-input'),
         classInput: document.getElementById('class-input'),
         numberInput: document.getElementById('number-input'),
         nameInput: document.getElementById('name-input'),
@@ -262,7 +289,8 @@
         adminWordList: document.getElementById('admin-word-list'),
         adminRecordList: document.getElementById('admin-record-list'),
         tabWord: document.getElementById('tab-word'),
-        tabRecord: document.getElementById('tab-record')
+        tabRecord: document.getElementById('tab-record'),
+        exitGameBtn: document.getElementById('exit-game-btn')
     };
 
     async function initFirebase() {
@@ -386,20 +414,39 @@
 
     async function addWord() {
         if (!currentUser) return;
-        const unit = parseInt(document.getElementById('new-unit').value) || 1;
-        const kr = document.getElementById('new-kr').value.trim();
-        const en = document.getElementById('new-en').value.trim();
+        const unit = parseInt(document.getElementById('new-unit').value);
+        const bulkText = document.getElementById('new-words-bulk').value.trim();
 
-        if (!kr || !en) return;
+        if (!unit || !bulkText) {
+            showToast("단원과 단어 목록을 모두 입력해주세요.", true);
+            return;
+        }
 
         document.getElementById('add-word-btn').disabled = true;
         try {
             const wordsRef = collection(db, 'artifacts', appId, 'public', 'data', 'words');
-            await addDoc(wordsRef, { unit, kr, en });
-            document.getElementById('new-kr').value = '';
-            document.getElementById('new-en').value = '';
+            const lines = bulkText.split('\n');
+            let addedCount = 0;
+
+            for (let line of lines) {
+                const parts = line.split(/[,\t]/);
+                if (parts.length >= 2) {
+                    const kr = parts[0].trim();
+                    const en = parts[1].trim();
+                    if (kr && en) {
+                        await addDoc(wordsRef, { unit, kr, en });
+                        addedCount++;
+                    }
+                }
+            }
+            
+            document.getElementById('new-words-bulk').value = '';
+            showToast(`${addedCount}개 단어 추가 완료!`);
             await fetchWords();
-        } catch (e) { console.error(e); }
+        } catch (e) { 
+            console.error(e); 
+            showToast("오류가 발생했습니다.", true);
+        }
         document.getElementById('add-word-btn').disabled = false;
     }
 
@@ -751,20 +798,22 @@
     }
 
     function startGame() {
-        const classNum = screens.classInput.value.trim();
+        const gradeNum = screens.gradeInput.value;
+        const classNum = screens.classInput.value;
         const studentNum = screens.numberInput.value.trim();
         const name = screens.nameInput.value.trim();
 
-        if (!classNum || !studentNum || !name) {
-            showToast("반, 번호, 이름을 모두 입력해주세요!", true);
+        if (!gradeNum || !classNum || !studentNum || !name) {
+            showToast("학년, 반, 번호, 이름을 모두 입력해주세요!", true);
             return;
         }
 
         playerInfo = {
+            gradeNum,
             classNum,
             studentNum,
             name,
-            maskedName: `${classNum}반 ${studentNum}번 ${maskName(name)}`
+            maskedName: `${gradeNum}학년 ${classNum}반 ${studentNum}번 ${maskName(name)}`
         };
 
         const selectedUnit = screens.unitSelect.value;
@@ -781,11 +830,13 @@
         state = 'PLAYING';
         screens.start.classList.add('hidden');
         screens.gameOver.classList.add('hidden');
+        screens.exitGameBtn.classList.remove('hidden');
         generateLevel();
     }
 
     async function endGame() {
         state = 'GAMEOVER';
+        screens.exitGameBtn.classList.add('hidden');
         screens.finalScore.textContent = score;
         screens.gameOver.classList.remove('hidden');
         screens.leaderboardList.innerHTML = '<p class="text-center text-gray-400">점수 기록 중...</p>';
@@ -799,6 +850,7 @@
             const leaderboardRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
             if (score > 0) {
                 await addDoc(leaderboardRef, { 
+                    gradeNum: playerInfo.gradeNum,
                     classNum: playerInfo.classNum,
                     studentNum: playerInfo.studentNum,
                     name: playerInfo.name,
@@ -852,6 +904,12 @@
 
     screens.startBtn.addEventListener('click', startGame);
     document.getElementById('restart-btn').addEventListener('click', startGame);
+    screens.exitGameBtn.addEventListener('click', () => {
+        state = 'START';
+        screens.start.classList.remove('hidden');
+        screens.gameOver.classList.add('hidden');
+        screens.exitGameBtn.classList.add('hidden');
+    });
 
     window.onload = () => {
         resizeCanvas();
