@@ -435,10 +435,30 @@
     }
 
     document.getElementById('open-admin-btn').addEventListener('click', () => {
-        screens.admin.classList.remove('hidden');
-        renderAdminWordList();
-        fetchAdminRecords();
+        screens.adminPassword.value = '';
+        screens.passwordModal.classList.remove('hidden');
     });
+    
+    screens.pwdCancelBtn.addEventListener('click', () => {
+        screens.passwordModal.classList.add('hidden');
+    });
+
+    screens.pwdConfirmBtn.addEventListener('click', () => {
+        if (screens.adminPassword.value === 'admin') {
+            screens.passwordModal.classList.add('hidden');
+            screens.admin.classList.remove('hidden');
+            renderAdminWordList();
+            fetchAdminRecords();
+        } else {
+            showToast("비밀번호가 틀렸습니다.", true);
+        }
+    });
+
+    // Enter 키로 비밀번호 확인 가능
+    screens.adminPassword.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') screens.pwdConfirmBtn.click();
+    });
+
     document.getElementById('close-admin-btn').addEventListener('click', () => screens.admin.classList.add('hidden'));
     document.getElementById('add-word-btn').addEventListener('click', addWord);
 
