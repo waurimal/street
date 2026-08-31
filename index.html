@@ -886,6 +886,7 @@
         screens.start.classList.remove('hidden');
         screens.gameOver.classList.add('hidden');
         screens.exitGameBtn.classList.add('hidden');
+        renderStartLeaderboard(); // 초기화면으로 나갈 때 랭킹 갱신
     });
 
     window.onload = () => {
