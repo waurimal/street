@@ -21,7 +21,7 @@
             position: relative;
             width: 100vw;
             height: 100vh;
-            max-width: 800px; /* PC에서는 최대 너비 제한 */
+            max-width: 800px;
             margin: 0 auto;
             background-color: #a8e6cf;
             box-shadow: 0 10px 25px rgba(0,0,0,0.2);
@@ -86,6 +86,11 @@
             gap: 5px;
         }
 
+        /* PC 환경에서는 조작 화살표 숨기기 */
+        @media (min-width: 801px) {
+            #d-pad { display: none; }
+        }
+
         .d-btn {
             background: rgba(255, 255, 255, 0.5);
             border: 2px solid rgba(255, 255, 255, 0.8);
@@ -104,7 +109,6 @@
         #btn-right { grid-column: 3; grid-row: 2; }
         #btn-down { grid-column: 2; grid-row: 3; }
         
-        /* 스크롤바 숨기기 (관리자 모드 리스트) */
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -122,25 +126,13 @@
             <div class="flex gap-2 mb-2">
                 <select id="grade-input" class="w-1/4 p-3 border-2 border-gray-300 rounded-xl font-bold text-center outline-none focus:border-green-400 bg-white">
                     <option value="" disabled selected>학년</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option>
+                    <option value="4">4</option><option value="5">5</option><option value="6">6</option>
                 </select>
                 <select id="class-input" class="w-1/4 p-3 border-2 border-gray-300 rounded-xl font-bold text-center outline-none focus:border-green-400 bg-white">
                     <option value="" disabled selected>반</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
-                    <option value="5">5</option>
-                    <option value="6">6</option>
-                    <option value="7">7</option>
-                    <option value="8">8</option>
-                    <option value="9">9</option>
-                    <option value="10">10</option>
+                    <option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+                    <option value="6">6</option><option value="7">7</option><option value="8">8</option><option value="9">9</option><option value="10">10</option>
                 </select>
                 <input type="number" id="number-input" placeholder="번호" class="w-1/4 p-3 border-2 border-gray-300 rounded-xl font-bold text-center outline-none focus:border-green-400" min="1">
                 <input type="text" id="name-input" placeholder="이름" class="w-1/4 p-3 border-2 border-gray-300 rounded-xl font-bold text-center outline-none focus:border-green-400" maxlength="5">
@@ -185,6 +177,9 @@
 
             <!-- 기록 관리 섹션 -->
             <div id="admin-record-section" class="flex flex-col flex-grow overflow-hidden hidden">
+                <select id="admin-record-unit" class="w-full p-2 mb-2 border-2 border-gray-300 rounded font-bold text-center outline-none bg-white">
+                    <option value="all">전체 단원 랭킹</option>
+                </select>
                 <div class="bg-gray-100 flex-grow rounded-xl p-2 overflow-y-auto no-scrollbar">
                     <ul id="admin-record-list" class="space-y-2 text-sm">
                         <p class="text-center text-gray-500 mt-4">데이터 불러오는 중...</p>
@@ -200,9 +195,12 @@
             <h1 class="text-4xl text-red-500 mb-2">앗, 게임 오버! 💦</h1>
             <p class="text-2xl mb-4 text-gray-700">내 점수: <span id="final-score" class="text-blue-500 font-bold">0</span>점</p>
             
-            <div class="bg-gray-100 rounded-xl p-4 mb-6 text-left max-h-48 overflow-y-auto no-scrollbar">
+            <div class="bg-gray-100 rounded-xl p-4 mb-6 text-left max-h-56 flex flex-col no-scrollbar">
                 <h3 class="text-center text-lg mb-2 text-gray-600">🏆 명예의 전당</h3>
-                <div id="leaderboard-list" class="text-sm">
+                <select id="gameover-record-unit" class="w-full p-2 mb-2 border-2 border-gray-300 rounded font-bold text-center outline-none bg-white text-sm">
+                    <option value="all">전체 단원 랭킹</option>
+                </select>
+                <div id="leaderboard-list" class="text-sm overflow-y-auto flex-grow no-scrollbar">
                     <p class="text-center text-gray-400">데이터 불러오는 중...</p>
                 </div>
             </div>
@@ -236,10 +234,7 @@
     import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // Firebase Setup
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'word-hopper-app';
-    
-    // 환경 변수가 없거나 비어있는 경우(GitHub Pages 배포 시) 선생님이 제공해주신 설정을 적용합니다.
     let firebaseConfig = {};
     if (typeof __firebase_config !== 'undefined' && __firebase_config !== "{}" && Object.keys(JSON.parse(__firebase_config)).length > 0) {
         firebaseConfig = JSON.parse(__firebase_config);
@@ -258,7 +253,6 @@
     let db, auth, currentUser;
     let isFirebaseReady = false;
 
-    // Game Words Data
     let wordList = [];
     const defaultWords = [
         { unit: 1, kr: "사과", en: "Apple" }, { unit: 1, kr: "학교", en: "School" },
@@ -269,7 +263,6 @@
         { unit: 3, kr: "선생님", en: "Teacher" }, { unit: 3, kr: "집", en: "House" }
     ];
 
-    // UI Elements
     const screens = {
         start: document.getElementById('start-screen'),
         admin: document.getElementById('admin-screen'),
@@ -282,6 +275,8 @@
         numberInput: document.getElementById('number-input'),
         nameInput: document.getElementById('name-input'),
         unitSelect: document.getElementById('unit-select'),
+        gameoverRecordUnit: document.getElementById('gameover-record-unit'),
+        adminRecordUnit: document.getElementById('admin-record-unit'),
         startBtn: document.getElementById('start-btn'),
         loadingStatus: document.getElementById('loading-status'),
         adminWordSection: document.getElementById('admin-word-section'),
@@ -314,14 +309,14 @@
             });
         } catch (error) {
             console.error("Firebase Auth Error:", error);
-            wordList = [...defaultWords]; // Fallback
+            wordList = [...defaultWords];
+            updateUnitSelects();
             enableStartButton();
         }
     }
     
     initFirebase();
 
-    // Word Management Logic (Admin)
     async function fetchWords() {
         if (!currentUser) return;
         try {
@@ -332,42 +327,38 @@
                 wordList.push({ id: doc.id, ...doc.data() });
             });
 
-            // If empty DB, populate with defaults automatically
             if (wordList.length === 0) {
-                for (let w of defaultWords) {
-                    await addDoc(wordsRef, w);
-                }
-                await fetchWords(); // refetch with IDs
+                for (let w of defaultWords) { await addDoc(wordsRef, w); }
+                await fetchWords();
                 return;
             }
 
-            updateUnitSelect();
+            updateUnitSelects();
             enableStartButton();
             renderAdminWordList();
         } catch (error) {
-            console.error("Error fetching words:", error);
             wordList = [...defaultWords];
-            updateUnitSelect();
+            updateUnitSelects();
             enableStartButton();
         }
     }
 
-    function updateUnitSelect() {
+    function updateUnitSelects() {
         const units = [...new Set(wordList.map(w => parseInt(w.unit)))].sort((a, b) => a - b);
         
-        while (screens.unitSelect.options.length > 1) {
-            screens.unitSelect.remove(1);
-        }
-        
-        units.forEach(unit => {
-            const option = document.createElement('option');
-            option.value = unit;
-            option.text = `${unit}단원 선택`;
-            screens.unitSelect.add(option);
+        [screens.unitSelect, screens.gameoverRecordUnit, screens.adminRecordUnit].forEach(select => {
+            if(!select) return;
+            while (select.options.length > 1) { select.remove(1); }
+            units.forEach(unit => {
+                const option = document.createElement('option');
+                option.value = unit;
+                option.text = `${unit}단원`;
+                select.add(option);
+            });
         });
     }
 
-    function checkStartAvailability() {
+    function enableStartButton() {
         const selectedUnit = screens.unitSelect.value;
         let filteredList = selectedUnit === 'all' ? wordList : wordList.filter(w => parseInt(w.unit) === parseInt(selectedUnit));
         
@@ -381,16 +372,10 @@
             screens.startBtn.classList.remove('hidden');
         }
     }
-    
-    screens.unitSelect.addEventListener('change', checkStartAvailability);
-
-    function enableStartButton() {
-        checkStartAvailability();
-    }
+    screens.unitSelect.addEventListener('change', enableStartButton);
 
     function renderAdminWordList() {
         screens.adminWordList.innerHTML = '';
-        // Sort by unit, then kr
         const sorted = [...wordList].sort((a, b) => a.unit - b.unit || a.kr.localeCompare(b.kr));
         
         sorted.forEach(word => {
@@ -417,10 +402,7 @@
         const unit = parseInt(document.getElementById('new-unit').value);
         const bulkText = document.getElementById('new-words-bulk').value.trim();
 
-        if (!unit || !bulkText) {
-            showToast("단원과 단어 목록을 모두 입력해주세요.", true);
-            return;
-        }
+        if (!unit || !bulkText) { showToast("단원과 단어 목록을 모두 입력해주세요.", true); return; }
 
         document.getElementById('add-word-btn').disabled = true;
         try {
@@ -439,26 +421,19 @@
                     }
                 }
             }
-            
             document.getElementById('new-words-bulk').value = '';
             showToast(`${addedCount}개 단어 추가 완료!`);
             await fetchWords();
-        } catch (e) { 
-            console.error(e); 
-            showToast("오류가 발생했습니다.", true);
-        }
+        } catch (e) { showToast("오류가 발생했습니다.", true); }
         document.getElementById('add-word-btn').disabled = false;
     }
 
     async function deleteWord(id) {
         if (!currentUser) return;
-        try {
-            await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'words', id));
-            await fetchWords();
-        } catch (e) { console.error(e); }
+        await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'words', id));
+        await fetchWords();
     }
 
-    // Admin UI bindings
     document.getElementById('open-admin-btn').addEventListener('click', () => {
         screens.admin.classList.remove('hidden');
         renderAdminWordList();
@@ -467,40 +442,41 @@
     document.getElementById('close-admin-btn').addEventListener('click', () => screens.admin.classList.add('hidden'));
     document.getElementById('add-word-btn').addEventListener('click', addWord);
 
-    // Admin Tabs Logic
     screens.tabWord.addEventListener('click', () => {
         screens.adminWordSection.classList.remove('hidden');
         screens.adminRecordSection.classList.add('hidden');
-        screens.tabWord.classList.replace('text-gray-400', 'text-purple-600');
-        screens.tabWord.classList.replace('hover:bg-gray-100', 'bg-purple-100');
-        screens.tabRecord.classList.replace('text-purple-600', 'text-gray-400');
-        screens.tabRecord.classList.replace('bg-purple-100', 'hover:bg-gray-100');
+        screens.tabWord.className = 'flex-1 font-bold text-purple-600 bg-purple-100 rounded py-1 transition-colors';
+        screens.tabRecord.className = 'flex-1 font-bold text-gray-400 hover:bg-gray-100 rounded py-1 transition-colors';
     });
 
     screens.tabRecord.addEventListener('click', () => {
         screens.adminRecordSection.classList.remove('hidden');
         screens.adminWordSection.classList.add('hidden');
-        screens.tabRecord.classList.replace('text-gray-400', 'text-purple-600');
-        screens.tabRecord.classList.replace('hover:bg-gray-100', 'bg-purple-100');
-        screens.tabWord.classList.replace('text-purple-600', 'text-gray-400');
-        screens.tabWord.classList.replace('bg-purple-100', 'hover:bg-gray-100');
+        screens.tabRecord.className = 'flex-1 font-bold text-purple-600 bg-purple-100 rounded py-1 transition-colors';
+        screens.tabWord.className = 'flex-1 font-bold text-gray-400 hover:bg-gray-100 rounded py-1 transition-colors';
         fetchAdminRecords();
     });
 
     async function fetchAdminRecords() {
         if (!currentUser) return;
+        const selectedUnit = screens.adminRecordUnit.value;
         screens.adminRecordList.innerHTML = '<p class="text-center text-gray-500 mt-4">기록을 불러오는 중...</p>';
         try {
             const leaderboardRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
             const snapshot = await getDocs(leaderboardRef);
             let records = [];
-            snapshot.forEach(doc => records.push({ id: doc.id, ...doc.data() }));
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                if(selectedUnit === 'all' || parseInt(data.unit) === parseInt(selectedUnit)) {
+                    records.push({ id: doc.id, ...data });
+                }
+            });
             
             records.sort((a, b) => b.score - a.score);
-            
             screens.adminRecordList.innerHTML = '';
+            
             if (records.length === 0) {
-                screens.adminRecordList.innerHTML = '<p class="text-center text-gray-500 mt-4">아직 랭킹 기록이 없습니다.</p>';
+                screens.adminRecordList.innerHTML = '<p class="text-center text-gray-500 mt-4">해당 단원의 랭킹 기록이 없습니다.</p>';
                 return;
             }
             
@@ -510,6 +486,7 @@
                 li.innerHTML = `
                     <div class="flex-grow flex gap-2 items-center">
                         <span class="font-bold ${index < 3 ? 'text-red-500' : 'text-gray-700'}">${index + 1}등</span>
+                        <span class="text-gray-500 text-xs">[${record.unit}단원]</span>
                         <span class="font-bold text-gray-700">${record.maskedName}</span>
                         <span class="text-blue-500 font-bold text-xs">${record.score}점</span>
                     </div>
@@ -528,9 +505,8 @@
             screens.adminRecordList.innerHTML = '<p class="text-center text-red-500">불러오기 실패</p>';
         }
     }
+    screens.adminRecordUnit.addEventListener('change', fetchAdminRecords);
 
-
-    // --- Game Logic ---
     const canvas = document.getElementById('gameCanvas');
     const ctx = canvas.getContext('2d');
     
@@ -541,44 +517,37 @@
     let currentWord = null;
     let targetZones = [];
     let cars = [];
-    let playerInfo = { classNum: "", studentNum: "", name: "", maskedName: "" };
+    let playerInfo = { classNum: "", studentNum: "", name: "", maskedName: "", unit: "all" };
     let gameWordList = [];
     let keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: false };
 
-    // Responsive sizing
-    function resizeCanvas() {
-        const container = document.getElementById('game-container');
-        canvas.width = container.clientWidth;
-        canvas.height = container.clientHeight;
-        
-        if (state === 'PLAYING') {
-            recalculateLayout();
-        }
-    }
-    window.addEventListener('resize', resizeCanvas);
-
-    // Dynamic layout properties
     let layout = { roadTop: 0, roadBottom: 0, laneHeight: 0, zoneY: 0, zoneHeight: 0 };
 
     const player = {
         x: 0, y: 0, size: 30, speed: 5, emoji: "🐥",
         reset: function() {
             this.x = canvas.width / 2;
-            this.y = canvas.height * 0.9;
+            this.y = layout.roadBottom + 10; // 길 아래에 안전하게 위치
         }
     };
 
     function recalculateLayout() {
-        // Road takes up middle area
-        layout.roadTop = canvas.height * 0.25;
-        layout.roadBottom = canvas.height * 0.85;
-        layout.laneHeight = (layout.roadBottom - layout.roadTop) / 5;
-        layout.zoneY = canvas.height * 0.12;
-        layout.zoneHeight = Math.min(60, canvas.height * 0.1);
+        const isMobile = window.innerWidth <= 800;
+        // 모바일일 경우 하단 D-Pad 공간 확보(약 220px), PC면 여백 50px만
+        const bottomSafeSpace = isMobile ? 220 : 50; 
+        const availableHeight = canvas.height - bottomSafeSpace;
 
-        // Update target zones spacing
+        layout.laneHeight = availableHeight / 7; // 도로 차선 1개의 높이
+        layout.roadBottom = availableHeight;
+        layout.roadTop = layout.roadBottom - (layout.laneHeight * 5); // 5차선
+        
+        // 정답 박스 (길 바로 위로 붙임)
+        layout.zoneHeight = Math.min(60, canvas.height * 0.08);
+        layout.zoneY = layout.roadTop - layout.zoneHeight - 5; 
+
+        // Update target zones spacing if they exist
         if (targetZones.length > 0) {
-            const zoneWidth = (canvas.width - 20) / 5 - 4; // 5 items, 4px gap, 10px outer margin
+            const zoneWidth = (canvas.width - 20) / 5 - 4; 
             targetZones.forEach((zone, index) => {
                 zone.width = zoneWidth;
                 zone.height = layout.zoneHeight;
@@ -588,18 +557,24 @@
         }
     }
 
+    function resizeCanvas() {
+        const container = document.getElementById('game-container');
+        canvas.width = container.clientWidth;
+        canvas.height = container.clientHeight;
+        if (state === 'PLAYING') recalculateLayout();
+    }
+    window.addEventListener('resize', resizeCanvas);
+
     function generateLevel() {
-        if(gameWordList.length < 5) return; // Guard
+        if(gameWordList.length < 5) return;
         
+        recalculateLayout();
         player.reset();
         cars = [];
-        recalculateLayout();
         
-        // Pick target
         const targetIndex = Math.floor(Math.random() * gameWordList.length);
         currentWord = gameWordList[targetIndex];
 
-        // Pick distractors
         let distractors = [];
         while(distractors.length < 4) {
             let rIdx = Math.floor(Math.random() * gameWordList.length);
@@ -608,10 +583,8 @@
             }
         }
 
-        let options = [currentWord, ...distractors];
-        options.sort(() => Math.random() - 0.5);
+        let options = [currentWord, ...distractors].sort(() => Math.random() - 0.5);
 
-        // Create Zones
         const zoneWidth = (canvas.width - 20) / 5 - 4;
         targetZones = options.map((opt, index) => {
             return {
@@ -624,12 +597,11 @@
             };
         });
 
-        // Generate Cars
         const carEmojis = ["🚗", "🚕", "🚙", "🚌", "🚓", "🚛"];
         for(let i=0; i<5; i++) {
-            let laneY = layout.roadTop + (layout.laneHeight * i) + (layout.laneHeight / 2) - 17; // center in lane
+            let laneY = layout.roadTop + (layout.laneHeight * i) + (layout.laneHeight / 2) - 17;
             let direction = i % 2 === 0 ? 1 : -1;
-            let carSpeed = (Math.random() * 1.5 + 1) * levelSpeed * (canvas.width / 400); // Scale speed by width
+            let carSpeed = (Math.random() * 1.5 + 1) * levelSpeed * (canvas.width / 400); 
             
             cars.push(createCar(laneY, direction, carSpeed, carEmojis));
             setTimeout(() => {
@@ -661,34 +633,23 @@
             if (car.dir === 1 && car.x > canvas.width + 50) car.x = -50;
             if (car.dir === -1 && car.x < -50) car.x = canvas.width + 50;
 
-            if (checkCollision(player, car, 0.7)) {
-                handleDamage("앗! 자동차에 부딪혔어요!");
-            }
+            if (checkCollision(player, car, 0.7)) handleDamage("앗! 자동차에 부딪혔어요!");
         });
 
         targetZones.forEach(zone => {
             if (player.y < zone.y + zone.height && player.x > zone.x && player.x < zone.x + zone.width) {
-                if (zone.isCorrect) {
-                    handleCorrectAnswer();
-                } else {
-                    handleDamage(`땡! [${zone.word.kr}]이(가) 아니에요!`);
-                }
+                if (zone.isCorrect) handleCorrectAnswer();
+                else handleDamage(`땡! [${zone.word.kr}]이(가) 아니에요!`);
             }
         });
     }
 
     function checkCollision(p, rect, factor = 1) {
         const pSize = p.size * factor;
-        return (
-            p.x < rect.x + rect.width &&
-            p.x + pSize > rect.x &&
-            p.y < rect.y + rect.height &&
-            p.y + pSize > rect.y
-        );
+        return ( p.x < rect.x + rect.width && p.x + pSize > rect.x && p.y < rect.y + rect.height && p.y + pSize > rect.y );
     }
 
     function draw() {
-        // Background
         ctx.fillStyle = '#a8e6cf';
         ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -710,21 +671,24 @@
 
         if (state !== 'PLAYING') return;
 
-        // Draw UI
+        // Draw UI Top (Hearts and Score on LEFT, Target on CENTER)
         ctx.fillStyle = 'rgba(255,255,255,0.8)';
-        ctx.fillRect(0, 0, canvas.width, 60);
+        ctx.fillRect(0, 0, canvas.width, 70);
         
+        // 목표 단어 (중앙)
         ctx.fillStyle = '#333';
-        ctx.font = 'bold 22px Jua';
+        ctx.font = 'bold 24px Jua';
         ctx.textAlign = 'center';
-        ctx.fillText(`목표: ${currentWord.kr}`, canvas.width / 2, 40);
+        ctx.textBaseline = 'middle';
+        ctx.fillText(`목표: ${currentWord.kr}`, canvas.width / 2, 35);
 
-        ctx.font = '18px Jua';
+        // 점수와 생명 (좌측)
+        ctx.font = 'bold 18px Jua';
         ctx.textAlign = 'left';
-        ctx.fillText(`점수: ${score}`, 10, 40);
-
-        ctx.textAlign = 'right';
-        ctx.fillText("❤️".repeat(lives), canvas.width - 10, 40);
+        ctx.fillStyle = '#1e3a8a';
+        ctx.fillText(`점수: ${score}`, 15, 25);
+        ctx.fillStyle = '#ef4444';
+        ctx.fillText("❤️".repeat(lives), 15, 50);
 
         // Draw Target Zones
         targetZones.forEach(zone => {
@@ -738,7 +702,6 @@
             ctx.stroke();
 
             ctx.fillStyle = '#333';
-            // 반응형 폰트 크기 계산 (글씨가 박스를 넘어가지 않도록)
             let fontSize = Math.max(12, Math.min(18, zone.width * 0.2)); 
             ctx.font = `${fontSize}px Jua`; 
             ctx.textAlign = 'center';
@@ -750,9 +713,7 @@
         ctx.font = '35px Arial';
         ctx.textAlign = 'left';
         ctx.textBaseline = 'top';
-        cars.forEach(car => {
-            ctx.fillText(car.emoji, car.x, car.y - 5);
-        });
+        cars.forEach(car => ctx.fillText(car.emoji, car.x, car.y - 5));
 
         // Draw Player
         ctx.font = '30px Arial';
@@ -790,7 +751,6 @@
         if (!name || name.length < 2) return name || "?";
         if (name.length === 2) return name[0] + "O";
         if (name.length === 3) return name[0] + "O" + name[2];
-        
         let masked = name[0];
         for (let i = 1; i < name.length - 1; i++) masked += "O";
         masked += name[name.length - 1];
@@ -809,15 +769,12 @@
         }
 
         playerInfo = {
-            gradeNum,
-            classNum,
-            studentNum,
-            name,
-            maskedName: `${gradeNum}학년 ${classNum}반 ${studentNum}번 ${maskName(name)}`
+            gradeNum, classNum, studentNum, name,
+            maskedName: `${gradeNum}-${classNum} ${studentNum}번 ${maskName(name)}`,
+            unit: screens.unitSelect.value
         };
 
-        const selectedUnit = screens.unitSelect.value;
-        gameWordList = selectedUnit === 'all' ? wordList : wordList.filter(w => parseInt(w.unit) === parseInt(selectedUnit));
+        gameWordList = playerInfo.unit === 'all' ? wordList : wordList.filter(w => parseInt(w.unit) === parseInt(playerInfo.unit));
 
         if (gameWordList.length < 5) {
             showToast("해당 단원의 단어가 부족합니다 (최소 5개)", true);
@@ -839,8 +796,10 @@
         screens.exitGameBtn.classList.add('hidden');
         screens.finalScore.textContent = score;
         screens.gameOver.classList.remove('hidden');
-        screens.leaderboardList.innerHTML = '<p class="text-center text-gray-400">점수 기록 중...</p>';
-
+        
+        // 방금 플레이한 단원으로 드롭다운 자동 설정
+        screens.gameoverRecordUnit.value = playerInfo.unit; 
+        
         if (!currentUser) {
             screens.leaderboardList.innerHTML = '<p class="text-center text-red-400">오프라인 모드입니다.</p>';
             return;
@@ -855,14 +814,11 @@
                     studentNum: playerInfo.studentNum,
                     name: playerInfo.name,
                     maskedName: playerInfo.maskedName,
-                    unit: playerInfo.unit, // 단원 정보도 함께 저장
+                    unit: playerInfo.unit, 
                     score: score, 
                     timestamp: serverTimestamp() 
                 });
             }
-
-            // 게임 오버 랭킹 렌더링 호출
-            screens.gameoverRecordUnit.value = playerInfo.unit; // 현재 플레이한 단원으로 기본 세팅
             await renderGameOverLeaderboard();
         } catch (error) {
             screens.leaderboardList.innerHTML = '<p class="text-center text-red-400">기록을 저장하거나 불러오지 못했습니다.</p>';
@@ -871,24 +827,39 @@
 
     async function renderGameOverLeaderboard() {
         const unit = screens.gameoverRecordUnit.value;
-        const topScores = await loadLeaderboard(screens.leaderboardList, unit);
-        const top5 = topScores.slice(0, 5);
-
-        screens.leaderboardList.innerHTML = '';
-        if (top5.length === 0) {
-            screens.leaderboardList.innerHTML = '<p class="text-center text-gray-400">아직 기록이 없어요.</p>';
-        } else {
-            top5.forEach((entry, index) => {
-                const div = document.createElement('div');
-                div.className = 'flex justify-between items-center py-1 border-b border-gray-200 last:border-0';
-                let medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index+1}.`;
-                div.innerHTML = `<span class="font-bold text-gray-700">${medal} ${entry.maskedName}</span><span class="text-blue-500 font-bold">${entry.score}점</span>`;
-                screens.leaderboardList.appendChild(div);
+        screens.leaderboardList.innerHTML = '<p class="text-center text-gray-400">점수 기록 중...</p>';
+        try {
+            const leaderboardRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
+            const snapshot = await getDocs(leaderboardRef);
+            let records = [];
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                if(unit === 'all' || parseInt(data.unit) === parseInt(unit)) {
+                    records.push(data);
+                }
             });
+
+            records.sort((a, b) => b.score - a.score);
+            const top5 = records.slice(0, 5);
+
+            screens.leaderboardList.innerHTML = '';
+            if (top5.length === 0) {
+                screens.leaderboardList.innerHTML = '<p class="text-center text-gray-400">아직 랭킹이 없어요.</p>';
+            } else {
+                top5.forEach((entry, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'flex justify-between items-center py-1 border-b border-gray-200 last:border-0';
+                    let medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index+1}.`;
+                    div.innerHTML = `<span class="font-bold text-gray-700">${medal} [${entry.unit === 'all' ? '전체' : entry.unit + '단원'}] ${entry.maskedName}</span><span class="text-blue-500 font-bold">${entry.score}점</span>`;
+                    screens.leaderboardList.appendChild(div);
+                });
+            }
+        } catch(e) {
+            screens.leaderboardList.innerHTML = '<p class="text-center text-red-400">기록을 불러오지 못했습니다.</p>';
         }
     }
+    screens.gameoverRecordUnit.addEventListener('change', renderGameOverLeaderboard);
 
-    // Controls
     window.addEventListener('keydown', e => { if(keys.hasOwnProperty(e.code)) keys[e.code] = true; });
     window.addEventListener('keyup', e => { if(keys.hasOwnProperty(e.code)) keys[e.code] = false; });
 
@@ -908,6 +879,8 @@
 
     screens.startBtn.addEventListener('click', startGame);
     document.getElementById('restart-btn').addEventListener('click', startGame);
+    
+    // 게임 중 초기화면으로 나가기 버튼
     screens.exitGameBtn.addEventListener('click', () => {
         state = 'START';
         screens.start.classList.remove('hidden');
@@ -917,7 +890,6 @@
 
     window.onload = () => {
         resizeCanvas();
-        recalculateLayout();
         draw();
         gameLoop();
     };
