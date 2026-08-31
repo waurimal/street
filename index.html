@@ -855,32 +855,36 @@
                     studentNum: playerInfo.studentNum,
                     name: playerInfo.name,
                     maskedName: playerInfo.maskedName,
+                    unit: playerInfo.unit, // 단원 정보도 함께 저장
                     score: score, 
                     timestamp: serverTimestamp() 
                 });
             }
 
-            const snapshot = await getDocs(leaderboardRef);
-            let scoresData = [];
-            snapshot.forEach(doc => scoresData.push(doc.data()));
-
-            scoresData.sort((a, b) => b.score - a.score);
-            const top5 = scoresData.slice(0, 5);
-
-            screens.leaderboardList.innerHTML = '';
-            if (top5.length === 0) {
-                screens.leaderboardList.innerHTML = '<p class="text-center text-gray-400">아직 기록이 없어요.</p>';
-            } else {
-                top5.forEach((entry, index) => {
-                    const div = document.createElement('div');
-                    div.className = 'flex justify-between items-center py-1 border-b border-gray-200 last:border-0';
-                    let medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index+1}.`;
-                    div.innerHTML = `<span class="font-bold text-gray-700">${medal} ${entry.maskedName}</span><span class="text-blue-500 font-bold">${entry.score}점</span>`;
-                    screens.leaderboardList.appendChild(div);
-                });
-            }
+            // 게임 오버 랭킹 렌더링 호출
+            screens.gameoverRecordUnit.value = playerInfo.unit; // 현재 플레이한 단원으로 기본 세팅
+            await renderGameOverLeaderboard();
         } catch (error) {
-            screens.leaderboardList.innerHTML = '<p class="text-center text-red-400">기록을 불러오지 못했습니다.</p>';
+            screens.leaderboardList.innerHTML = '<p class="text-center text-red-400">기록을 저장하거나 불러오지 못했습니다.</p>';
+        }
+    }
+
+    async function renderGameOverLeaderboard() {
+        const unit = screens.gameoverRecordUnit.value;
+        const topScores = await loadLeaderboard(screens.leaderboardList, unit);
+        const top5 = topScores.slice(0, 5);
+
+        screens.leaderboardList.innerHTML = '';
+        if (top5.length === 0) {
+            screens.leaderboardList.innerHTML = '<p class="text-center text-gray-400">아직 기록이 없어요.</p>';
+        } else {
+            top5.forEach((entry, index) => {
+                const div = document.createElement('div');
+                div.className = 'flex justify-between items-center py-1 border-b border-gray-200 last:border-0';
+                let medal = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index+1}.`;
+                div.innerHTML = `<span class="font-bold text-gray-700">${medal} ${entry.maskedName}</span><span class="text-blue-500 font-bold">${entry.score}점</span>`;
+                screens.leaderboardList.appendChild(div);
+            });
         }
     }
 
