@@ -1610,7 +1610,7 @@
 
         window.submitTeacherAuth = () => {
             const inputPw = document.getElementById('teacher-pw-input').value.trim();
-            const validPasswords = ['1234', '4657', 'wauri1234', 'admin', currentAdminPassword];
+            const validPasswords = ['1234', '4657', 'wauri1234', 'admin', '0000', currentAdminPassword, localStorage.getItem('waurimal_admin_pw')].filter(Boolean);
             if (validPasswords.includes(inputPw)) {
                 closeTeacherAuthModal();
                 window.showScreen('screen-teacher');
@@ -1763,6 +1763,7 @@
                 const pwdDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'admin');
                 await setDoc(pwdDocRef, { password: newPw }, { merge: true });
                 currentAdminPassword = newPw;
+                localStorage.setItem('waurimal_admin_pw', newPw);
                 document.getElementById('t-new-password').value = '';
                 window.showToast("비밀번호가 성공적으로 변경되었습니다!");
             } catch (e) {
