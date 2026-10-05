@@ -673,7 +673,7 @@
                     <button type="button" onclick="changeAdminPassword()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl transition">
                         비밀번호 변경하기
                     </button>
-                    <p class="text-[11px] text-slate-400">기본 비밀번호: 1234, 4657, wauri1234, admin</p>
+                    <p class="text-[11px] text-slate-400">초기 비밀번호: 1234 (설정에서 변경 가능)</p>
                 </div>
             </div>
 
@@ -864,6 +864,14 @@
         // ── 4. 화면 전환 유틸 (showScreen: 확실한 은닉 & 최상단 밀착) ──
         // ════════════════════════════════════════════════════════════════════
         window.showScreen = (screenId) => {
+            if (screenId === 'screen-teacher' && (!window.WaurimalAuth || !window.WaurimalAuth.isAuthenticated())) {
+                if (typeof window.openTeacherAuthModal === 'function') {
+                    window.openTeacherAuthModal();
+                } else {
+                    alert('교사 인증이 필요합니다.');
+                }
+                return;
+            }
             const screens = ['screen-home', 'screen-game', 'screen-gameover', 'screen-teacher'];
             screens.forEach(id => {
                 const el = document.getElementById(id);
@@ -1679,6 +1687,13 @@
         // ── 10. 교사 설정 관리 모드 (단어 CRUD, 랭킹 관리, 비밀번호 변경) ──
         // ════════════════════════════════════════════════════════════════════
         window.openTeacherAuthModal = () => {
+            if (window.WaurimalAuth && window.WaurimalAuth.isAuthenticated()) {
+                window.showScreen('screen-teacher');
+                switchTeacherTab('units');
+                renderTeacherWords();
+                renderTeacherRecords();
+                return;
+            }
             const pwInput = document.getElementById('teacher-pw-input');
             if (pwInput) pwInput.value = '';
             document.getElementById('teacher-auth-modal').classList.remove('hidden');
@@ -1691,8 +1706,8 @@
 
         window.submitTeacherAuth = () => {
             const inputPw = document.getElementById('teacher-pw-input').value.trim();
-            const validPasswords = ['1234', '4657', 'wauri1234', 'admin', '0000', currentAdminPassword, localStorage.getItem('waurimal_admin_pw')].filter(Boolean);
-            if (validPasswords.includes(inputPw)) {
+            const isValid = window.WaurimalAuth ? window.WaurimalAuth.authenticate(inputPw) : (inputPw === (localStorage.getItem('waurimal_admin_pw') || currentAdminPassword || '1234'));
+            if (isValid) {
                 closeTeacherAuthModal();
                 window.showScreen('screen-teacher');
                 switchTeacherTab('units');
@@ -1836,15 +1851,19 @@
 
         window.changeAdminPassword = async () => {
             const newPw = document.getElementById('t-new-password').value.trim();
-            if (!newPw) {
-                window.showToast("새 비밀번호를 입력해주세요.");
+            if (!newPw || newPw.length < 4) {
+                window.showToast("새 비밀번호를 4자리 이상 입력해주세요.");
                 return;
             }
             try {
+                if (window.WaurimalAuth) {
+                    window.WaurimalAuth.setPw(newPw);
+                } else {
+                    localStorage.setItem('waurimal_admin_pw', newPw);
+                }
                 const pwdDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'settings', 'admin');
                 await setDoc(pwdDocRef, { password: newPw }, { merge: true });
                 currentAdminPassword = newPw;
-                localStorage.setItem('waurimal_admin_pw', newPw);
                 document.getElementById('t-new-password').value = '';
                 window.showToast("비밀번호가 성공적으로 변경되었습니다!");
             } catch (e) {
