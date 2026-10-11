@@ -1155,8 +1155,9 @@
             }
 
             container.innerHTML = '';
-            top30.forEach((r, idx) => {
-                const rank = idx + 1;
+            top30.forEach((r, idx, arr) => {
+                // 동점자 동일 순위 및 차순위 건너뛰기 (1등 2명이면 1등, 1등, 3등)
+                const rank = arr.findIndex(x => Number(x.score || 0) <= Number(r.score || 0)) + 1;
                 const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `<span class="text-xs font-black text-slate-400 w-5 text-center">${rank}</span>`;
                 const rankClass = rank === 1 ? 'hof-rank-1' : rank === 2 ? 'hof-rank-2' : rank === 3 ? 'hof-rank-3' : '';
                 const avatar = r.avatar || '🐥';
