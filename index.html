@@ -673,7 +673,7 @@
                     <button type="button" onclick="changeAdminPassword()" class="w-full py-2.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl transition">
                         비밀번호 변경하기
                     </button>
-                    <p class="text-[11px] text-slate-400">초기 비밀번호: 1234 (설정에서 변경 가능)</p>
+                    <p class="text-[11px] text-slate-400">교사 비밀번호를 입력하세요.</p>
                 </div>
             </div>
 
@@ -801,7 +801,7 @@
             avatar: "🐥"
         };
 
-        let currentAdminPassword = "admin";
+        let currentAdminPassword = "4657";
         let allWords = [...LEGACY_DEFAULT_WORDS];
         let hofRecords = [...LEGACY_DEFAULT_SCORES];
         let currentHofPeriod = 'all';
@@ -1707,7 +1707,7 @@
 
         window.submitTeacherAuth = () => {
             const inputPw = document.getElementById('teacher-pw-input').value.trim();
-            const isValid = window.WaurimalAuth ? window.WaurimalAuth.authenticate(inputPw) : (inputPw === (localStorage.getItem('waurimal_admin_pw') || currentAdminPassword || '1234'));
+            const isValid = window.WaurimalAuth ? window.WaurimalAuth.authenticate(inputPw) : (inputPw === (localStorage.getItem('waurimal_admin_pw') || currentAdminPassword || '4657'));
             if (isValid) {
                 closeTeacherAuthModal();
                 window.showScreen('screen-teacher');
